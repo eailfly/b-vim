@@ -268,10 +268,10 @@ autocmd CmdwinEnter * nnoremap <buffer> <CR> <CR>
 
 
 " 上下左右键的行为 会显示其他信息
-inoremap <expr> <Down>     pumvisible() ? "\<C-n>" : "\<Down>"
-inoremap <expr> <Up>       pumvisible() ? "\<C-p>" : "\<Up>"
-inoremap <expr> <PageDown> pumvisible() ? "\<PageDown>\<C-p>\<C-n>" : "\<PageDown>"
-inoremap <expr> <PageUp>   pumvisible() ? "\<PageUp>\<C-p>\<C-n>" : "\<PageUp>"
+ inoremap <expr> <Down>     pumvisible() ? "\<C-n>" : "\<Down>"
+ inoremap <expr> <Up>       pumvisible() ? "\<C-p>" : "\<Up>"
+ inoremap <expr> <PageDown> pumvisible() ? "\<PageDown>\<C-p>\<C-n>" : "\<PageDown>"
+ inoremap <expr> <PageUp>   pumvisible() ? "\<PageUp>\<C-p>\<C-n>" : "\<PageUp>"
 
 " 打开自动定位到最后编辑的位置, 需要确认 .viminfo 当前用户可写
 if has("autocmd")
@@ -563,3 +563,5 @@ highlight SpellRare term=underline cterm=underline
 highlight clear SpellLocal
 highlight SpellLocal term=underline cterm=underline
 
+"取消vim自动注释
+autocmd FileType * setlocal formatoptions-=c formatoptions-=r formatoptions-=o
