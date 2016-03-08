@@ -2,6 +2,7 @@ b-vim
 =====
 
 Fork自 `k-vim <https://github.com/wklken/k-vim>`__
+
 --------------
 
     LAST\_UPDATE\_TIME: 2015-12-15
@@ -80,7 +81,7 @@ Fork自 `k-vim <https://github.com/wklken/k-vim>`__
 使用 `vim-plug <https://github.com/junegunn/vim-plug>`__ 管理插件
 
 ``vim-plug`` 常见问题: `vim-plug
-faq <https://github.com/junegunn/vim-plug/wiki/faq>`__ 
+faq <https://github.com/junegunn/vim-plug/wiki/faq>`__
 
 管理插件的命令
 
@@ -263,7 +264,3 @@ Donation
 .. figure:: https://raw.githubusercontent.com/wklken/gallery/master/donation/donation.png
    :alt: donation
 
-   donation
-
-------------------------
-------------------------
