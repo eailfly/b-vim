@@ -99,7 +99,7 @@ set magic
 
 " TODO: Configure backspace so it acts as it should act
 set backspace=eol,start,indent
-set whichwrap+=<,>,h,l
+" set whichwrap+=<,>,h,l
 
 "=============================
 " Display Settings 展示/排版等界面格式设置
