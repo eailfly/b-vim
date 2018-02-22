@@ -871,14 +871,32 @@ function! s:hash_match(a, b)
   return stridx(a:a, a:b) == 0 || stridx(a:b, a:a) == 0
 endfunction
 
-function! s:checkout(spec)
-  let sha = a:spec.commit
-  let output = s:system('git rev-parse HEAD', a:spec.dir)
-  if !v:shell_error && !s:hash_match(sha, s:lines(output)[0])
-    let output = s:system(
-          \ 'git fetch --depth 999999 && git checkout '.s:esc(sha).' --', a:spec.dir)
-  endif
-  return output
+function! s:checkout(plugs)
+  for [name, spec] in items(a:plugs)
+    let sha = spec.commit
+    call append(3, '- Checking out '.sha[:6].' of '.name.' ... ')
+    redraw
+
+    let error = []
+    let output = s:lines(s:system('git rev-parse HEAD', spec.dir))
+    if v:shell_error
+      let error = output
+    elseif !s:hash_match(sha, output[0])
+      let output = s:lines(s:system(
+            \ 'git fetch --depth 999999 && git checkout '.sha, spec.dir))
+      if v:shell_error
+        let error = output
+      endif
+    endif
+    if empty(error)
+      call setline(4, getline(4) . 'OK')
+    else
+      call setline(4, 'x'.getline(4)[1:] . 'Error')
+      for line in reverse(error)
+        call append(4, '    '.line)
+      endfor
+    endif
+  endfor
 endfunction
 
 function! s:finish(pull)
@@ -1059,57 +1077,8 @@ function! s:update_finish()
     let $GIT_TERMINAL_PROMPT = s:git_terminal_prompt
   endif
   if s:switch_in()
-    call append(3, '- Updating ...') | 4
-    for [name, spec] in items(filter(copy(s:update.all), 'index(s:update.errors, v:key) < 0 && (s:update.force || s:update.pull || has_key(s:update.new, v:key))'))
-      let [pos, _] = s:logpos(name)
-      if !pos
-        continue
-      endif
-      if has_key(spec, 'commit')
-        call s:log4(name, 'Checking out '.spec.commit)
-        let out = s:checkout(spec)
-      elseif has_key(spec, 'tag')
-        let tag = spec.tag
-        if tag =~ '\*'
-          let tags = s:lines(s:system('git tag --list '.s:shellesc(tag).' --sort -version:refname 2>&1', spec.dir))
-          if !v:shell_error && !empty(tags)
-            let tag = tags[0]
-            call s:log4(name, printf('Latest tag for %s -> %s', spec.tag, tag))
-            call append(3, '')
-          endif
-        endif
-        call s:log4(name, 'Checking out '.tag)
-        let out = s:system('git checkout -q '.s:esc(tag).' -- 2>&1', spec.dir)
-      else
-        let branch = s:esc(get(spec, 'branch', 'master'))
-        call s:log4(name, 'Merging origin/'.branch)
-        let out = s:system('git checkout -q '.branch.' -- 2>&1'
-              \. (has_key(s:update.new, name) ? '' : ('&& git merge --ff-only origin/'.branch.' 2>&1')), spec.dir)
-      endif
-      if !v:shell_error && filereadable(spec.dir.'/.gitmodules') &&
-            \ (s:update.force || has_key(s:update.new, name) || s:is_updated(spec.dir))
-        call s:log4(name, 'Updating submodules. This may take a while.')
-        let out .= s:bang('git submodule update --init --recursive 2>&1', spec.dir)
-      endif
-      let msg = s:format_message(v:shell_error ? 'x': '-', name, out)
-      if v:shell_error
-        call add(s:update.errors, name)
-        call s:regress_bar()
-        silent execute pos 'd _'
-        call append(4, msg) | 4
-      elseif !empty(out)
-        call setline(pos, msg[0])
-      endif
-      redraw
-    endfor
-    silent 4 d _
-    try
-      call s:do(s:update.pull, s:update.force, filter(copy(s:update.all), 'index(s:update.errors, v:key) < 0 && has_key(v:val, "do")'))
-    catch
-      call s:warn('echom', v:exception)
-      call s:warn('echo', '')
-      return
-    endtry
+    call s:checkout(filter(copy(s:update.all), 'has_key(v:val, "commit")'))
+    call s:do(s:update.pull, s:update.force, filter(copy(s:update.all), 'has_key(v:val, "do")'))
     call s:finish(s:update.pull)
     call setline(1, 'Updated. Elapsed time: ' . split(reltimestr(reltime(s:update.start)))[0] . ' sec.')
     call s:switch_out('normal! gg')
@@ -2297,7 +2266,7 @@ function! s:preview_commit()
     let b:plug_preview = !s:is_preview_window_open()
   endif
 
-  let sha = matchstr(getline('.'), '^  \X*\zs[0-9a-f]\{7,9}')
+  let sha = matchstr(getline('.'), '^  \X*\zs[0-9a-z]\{7}')
   if empty(sha)
     return
   endif
